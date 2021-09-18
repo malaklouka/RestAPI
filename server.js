@@ -1,67 +1,22 @@
-//import 
+
 const express = require('express')
-const mongoose = require('mongoose')
-const User=require('./models/User')
-var router = express.Router();
-router.use(express.json());
+//use cors
+// cors is for providing a Connect/Express middleware that can be used to enable CORS with various options
+const cors = require('cors')
+const dotenv = require('dotenv')
 
-//dotenv
-require('dotenv').config()
-
-// connecting to database 
-const connexion = async() => {
-    try {
-        let response = mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true ,
-             useUnifiedTopology: true,
-        })
-    console.log('connecting to database.. :) ')
-    } catch (err) {
-        console.log(err)
-    }
-} 
-
+const persons = require('./routes/persons')
+const connectdb = require('./config/connectdb')
 const app = express()
+dotenv.config();
+connectdb();
 
-connexion()
-//routes
-//return all user
-router.route('/').get((req, res) => {
-    User.find()
-        .then(users => res.json(users))
-        .catch(err => res.status(400).json(`Error: ${err}`))
-})
-
-//ADD A NEW USER TO THE DATABASE
-router.route('/add').post((req, res) => {
-    const name = req.body.name
-    const newUser = new User({name})
-//save
-    newUser.save()
-           .then(() => res.json('User added successfully!'))
-           .catch(err => res.status(400).json(`Error: ${err}`))
-})
-
-//Update user 
-router.route('/update/:id').put((req, res) => {
-    let updatedUser = User.findByIdAndUpdate({_id: req.params.id}, { $set: {...req.body}})
-     updatedUser.save()
-                .then(() => res.json('User updated successfully... :)'))
-                .catch(err => res.status(400).json(`Error: ${err}`)) 
-})
-
-//Delete user
-router.route('/delete/:id').delete((req, res) => {
-    User.findByIdAndDelete({_id: req.params.id})
-        .then(() => res.json('User deleted successfully! :)'))
-        .catch(err => res.status(400).json(`Error: ${err}`))
-})
-
-
-
+app.use('/api/users',persons) // every route inside of the persons routes begin with users : http://localhost:5000/api/users
+app.use(express.json())
+app.use(cors());
 // PORT 
+const PORT = process.env.PORT || 5000
 app.listen(PORT,(err)=>{
     if (err){console.log(err)}
     else { console.log( `Server is running at ${PORT}`)}
 })
-module.exports = router
